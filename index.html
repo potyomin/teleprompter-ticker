@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Бегущая строка (телесуфлёр)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <h1>Бегущая строка</h1>
+      <p class="hint">Введите текст, выставьте скорость, нажмите Play. Текст бежит справа → налево.</p>
+    </header>
+
+    <section class="controls">
+      <label class="field">
+        <span class="label">Текст</span>
+        <textarea id="inputText" rows="4" placeholder="Введите ваш текст для бегущей строки..."></textarea>
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span class="label">Скорость: <strong><span id="speedValue">120</span></strong> px/сек</span>
+          <input id="speed" type="range" min="30" max="400" value="120" />
+        </label>
+
+        <label class="field">
+          <span class="label">Размер шрифта</span>
+          <input id="fontSize" type="number" min="14" max="120" value="48" />
+        </label>
+      </div>
+
+      <div class="buttons">
+        <button id="apply" class="btn">Применить текст</button>
+        <button id="play" class="btn primary">▶︎ Play</button>
+        <button id="pause" class="btn">❚❚ Pause</button>
+        <button id="reset" class="btn danger">⟲ Reset</button>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="ticker" id="ticker">
+        <div class="ticker__viewport" id="viewport">
+          <div class="ticker__text" id="tickerText"></div>
+        </div>
+      </div>
+      <div class="stage-hint">
+        Совет: разверните окно/браузер на полный экран — будет удобнее читать.
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
