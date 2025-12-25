@@ -132,20 +132,111 @@ window.addEventListener("resize", () => {
     }
 });
 
-async function toggleFullscreen() {
-    try {
-        if (!document.fullscreenElement) {
-            await ticker.requestFullscreen();
-        } else {
-            await document.exitFullscreen();
-        }
-    } catch (e) {
-        console.error(e);
-        alert(
-            "Fullscreen не включился. Обычно это работает только на https/localhost (на GitHub Pages будет ок)."
-        );
+// --- Fullscreen (native + fallback) ---
+let pseudoFs = false;
+
+function hasNativeFs() {
+    return !!(
+        ticker &&
+        (ticker.requestFullscreen ||
+            ticker.webkitRequestFullscreen ||
+            ticker.msRequestFullscreen)
+    );
+}
+
+function isNativeFsNow() {
+    return !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement
+    );
+}
+
+async function nativeEnter() {
+    if (ticker.requestFullscreen) return ticker.requestFullscreen();
+    if (ticker.webkitRequestFullscreen) return ticker.webkitRequestFullscreen(); // Safari
+    if (ticker.msRequestFullscreen) return ticker.msRequestFullscreen(); // old Edge
+    throw new Error("Fullscreen API not supported");
+}
+
+async function nativeExit() {
+    if (document.exitFullscreen) return document.exitFullscreen();
+    if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    if (document.msExitFullscreen) return document.msExitFullscreen();
+}
+
+function syncAfterFsChange(isFs) {
+    document.body.classList.toggle("fs", isFs);
+    fullscreenBtn.textContent = isFs ? "⤢ Exit fullscreen" : "⛶ Fullscreen";
+
+    resetPosition();
+    if (state.playing) {
+        state.lastTs = performance.now();
+        requestAnimationFrame(tick);
     }
 }
+
+function pseudoEnter() {
+    pseudoFs = true;
+    document.documentElement.style.overflow = "hidden";
+    syncAfterFsChange(true);
+}
+
+function pseudoExit() {
+    pseudoFs = false;
+    document.documentElement.style.overflow = "";
+    syncAfterFsChange(false);
+}
+
+async function toggleFullscreen() {
+    // если включен псевдо-режим — выключаем
+    if (pseudoFs) return pseudoExit();
+
+    // если мы уже в нативном fullscreen — выходим
+    if (isNativeFsNow()) {
+        try {
+            await nativeExit();
+        } catch (e) {
+            console.warn(e);
+        }
+        // класс снимется через fullscreenchange
+        return;
+    }
+
+    // пробуем нативный fullscreen, если доступен
+    if (hasNativeFs()) {
+        try {
+            await nativeEnter();
+            // на всякий случай сразу обновим UI (а потом подтвердится fullscreenchange)
+            syncAfterFsChange(true);
+            return;
+        } catch (e) {
+            console.warn("Native fullscreen failed, fallback to pseudo:", e);
+        }
+    }
+
+    // fallback
+    pseudoEnter();
+}
+
+if (fullscreenBtn && ticker) {
+    fullscreenBtn.addEventListener("click", toggleFullscreen);
+    ticker.addEventListener("dblclick", toggleFullscreen);
+}
+
+document.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (k === "f") toggleFullscreen();
+    if (e.key === "Escape" && pseudoFs) pseudoExit();
+});
+
+// нативные события (выход по Esc и т.п.)
+document.addEventListener("fullscreenchange", () => {
+    if (!pseudoFs) syncAfterFsChange(!!document.fullscreenElement);
+});
+document.addEventListener("webkitfullscreenchange", () => {
+    if (!pseudoFs) syncAfterFsChange(!!document.webkitFullscreenElement);
+});
 
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 

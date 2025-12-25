@@ -208,6 +208,12 @@ body.fs .ticker,
     background: #000;
 }
 
+body.fs .ticker {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+}
+
 body.fs .ticker__viewport,
 #ticker:fullscreen .ticker__viewport {
     height: 100vh;
