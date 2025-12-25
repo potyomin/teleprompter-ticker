@@ -11,6 +11,9 @@ const resetBtn = document.getElementById("reset");
 const viewport = document.getElementById("viewport");
 const tickerText = document.getElementById("tickerText");
 
+const fullscreenBtn = document.getElementById("fullscreen");
+const ticker = document.getElementById("ticker");
+
 const state = {
     playing: false,
     speedPxPerSec: Number(speed.value),
@@ -124,6 +127,47 @@ window.addEventListener("resize", () => {
     resetPosition();
     if (wasPlaying) {
         state.playing = true;
+        state.lastTs = performance.now();
+        requestAnimationFrame(tick);
+    }
+});
+
+async function toggleFullscreen() {
+    try {
+        if (!document.fullscreenElement) {
+            await ticker.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
+        }
+    } catch (e) {
+        console.error(e);
+        alert(
+            "Fullscreen не включился. Обычно это работает только на https/localhost (на GitHub Pages будет ок)."
+        );
+    }
+}
+
+fullscreenBtn.addEventListener("click", toggleFullscreen);
+
+// двойной клик по самой строке — тоже fullscreen
+ticker.addEventListener("dblclick", toggleFullscreen);
+
+// клавиша F — fullscreen
+document.addEventListener("keydown", (e) => {
+    if (e.key.toLowerCase() === "f") toggleFullscreen();
+});
+
+// когда вошли/вышли из fullscreen — меняем UI и пересчитываем размеры
+document.addEventListener("fullscreenchange", () => {
+    const isFs = !!document.fullscreenElement;
+    document.body.classList.toggle("fs", isFs);
+    fullscreenBtn.textContent = isFs ? "⤢ Exit fullscreen" : "⛶ Fullscreen";
+
+    // важно: после смены режима пересчитать ширину и стартовую позицию
+    resetPosition();
+
+    // если было на паузе — оставляем как есть, если играло — продолжит
+    if (state.playing) {
         state.lastTs = performance.now();
         requestAnimationFrame(tick);
     }
