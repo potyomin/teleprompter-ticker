@@ -24,7 +24,7 @@ const state = {
 };
 
 function setFontSize(px) {
-    const size = Math.max(14, Math.min(120, Number(px) || 48));
+    const size = Math.max(14, Math.min(260, Number(px) || 64));
     tickerText.style.fontSize = `${size}px`;
 }
 
